@@ -38,7 +38,7 @@ export default function RootLayout({
           <article className="h-full pb-[100px] sm:pb-0 flex-1 bg-[#F3F6FD] sm:rounded-2xl p-4 md:p-8 font-black w-full">
             {children}
           </article>
-          <div className="md:hidden w-full absolute bottom-0 left-0 w-full bg-[var(--background)] overflow-hidden">
+          <div className="md:hidden w-full fixed bottom-0 left-0 w-full bg-[var(--background)] overflow-hidden">
             <LayoutNavbar links={SidebarLinks} />
           </div>
         </main>
