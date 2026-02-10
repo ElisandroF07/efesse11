@@ -3,22 +3,36 @@
 import { useParkingStore } from "@/src/presentation/store/useParkingStore";
 import { useState } from "react";
 import { Ticket } from "@/src/domain/entities/Ticket";
+import z from 'zod'
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const CheckInFormSchema = z.object({
+    plate: z.string().regex(/^[A-Z]{2}-[0-9]{2}-[0-9]{2}-[A-Z]{2}$/, {
+        message: "Formato esperado: LD-00-00-AA"
+    })
+})
+
+type CheckInFormType = z.infer<typeof CheckInFormSchema>
 
 export function CheckOutForm() {
-    const [identifier, setIdentifier] = useState("");
     const { checkOut, loading, error, clearError } = useParkingStore();
     const [processedTicket, setProcessedTicket] = useState<Ticket | null>(null);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!identifier) return;
+    
+        const { formState: { errors }, register, handleSubmit } = useForm({
+            resolver: zodResolver(CheckInFormSchema)
+        })
+    
+
+    const submit = (data: CheckInFormType) => {
+        if (!data.plate) return;
         setProcessedTicket(null);
 
         try {
-            const ticket = checkOut(identifier);
+            const ticket = checkOut(data.plate);
             if (ticket) {
                 setProcessedTicket(ticket);
-                setIdentifier("");
             }
         } catch (e) {
         }
@@ -69,21 +83,26 @@ export function CheckOutForm() {
                     </button>
                 </div>
             ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit(submit)} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium !text-[var(--background)] mb-1.5">Ticket ID ou Matrícula</label>
                         <input
                             type="text"
-                            value={identifier}
-                            onChange={(e) => setIdentifier(e.target.value.toUpperCase())}
                             placeholder="ID ou Matrícula"
+                            {...register('plate')}
                             className="w-full px-4 py-3 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-[var(--background)] placeholder-gray-400 focus:outline-none  focus:border-zinc-400 transition-all font-mono tracking-wider"
                         />
+                            {errors.plate?.message &&
+                                <span className="w-full px-4 bg-red-100 !text-red-500
+                            ">
+                                {errors.plate.message}
+                            </span>
+                            }
                     </div>
 
                     <button
                         type="submit"
-                        disabled={loading || !identifier}
+                        disabled={loading}
                         className="w-full py-3.5 px-4 bg-[var(--background)] hover:bg-black/80 text-white font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-gray-200 active:scale-[0.98]"
                     >
                         {loading ? "Calculando..." : "Calcular e Pagar"}

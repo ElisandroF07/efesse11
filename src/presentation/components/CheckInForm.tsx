@@ -2,25 +2,36 @@
 
 import { useParkingStore } from "@/src/presentation/store/useParkingStore";
 import { useState } from "react";
-import Image from "next/image";
+import z from 'zod'
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const CheckInFormSchema = z.object({
+    plate: z.string().regex(/^[A-Z]{2}-[0-9]{2}-[0-9]{2}-[A-Z]{2}$/, {
+        message: "Formato esperado: LD-00-00-AA"
+    })
+})
+
+type CheckInFormType = z.infer<typeof CheckInFormSchema>
 
 export function CheckInForm() {
-    const [plate, setPlate] = useState("");
+
+    const { formState: { errors }, register, handleSubmit } = useForm({
+        resolver: zodResolver(CheckInFormSchema)
+    })
 
     const { checkIn, loading, error, clearError } = useParkingStore();
     const [ticket, setTicket] = useState<any | null>(null);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!plate) return;
+    const submit = (data: CheckInFormType) => {
+        if (!data.plate) return;
         setTicket(null);
         clearError();
 
         try {
-            const newTicket = checkIn(plate);
+            const newTicket = checkIn(data.plate);
             if (newTicket) {
                 setTicket(newTicket);
-                setPlate("");
             }
         } catch (e) {
         }
@@ -67,21 +78,26 @@ export function CheckInForm() {
                     </button>
                 </div>
             ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit(submit)} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium !text-[var(--background)]  mb-1.5">Matrícula</label>
                         <input
                             type="text"
-                            value={plate}
-                            onChange={(e) => setPlate(e.target.value.toUpperCase())}
+                            {...register('plate')}
                             placeholder="LD-00-00-AA"
                             className="w-full px-4 py-3 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-[var(--background)] placeholder-gray-400 focus:outline-none  focus:border-zinc-400 transition-all font-mono tracking-wider"
                         />
+                        {errors.plate?.message &&
+                            <span className="w-full px-4 bg-red-100 !text-red-500
+                        ">
+                            {errors.plate.message}
+                        </span>
+                        }
                     </div>
 
                     <button
                         type="submit"
-                        disabled={loading || !plate}
+                        disabled={loading}
                         className="w-full py-3.5 px-4 bg-[var(--background)] hover:bg-black/80 text-white font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-gray-200 active:scale-[0.98]"
                     >
                         {loading ? "Processando..." : "Confirmar Entrada"}
