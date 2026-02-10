@@ -1,4 +1,4 @@
-import { Spot } from "@/src/shared/types/Spot";
+import { Spot, SpotStatus, SpotZone } from "@/src/domain/entities/Spot";
 
 export const SpotsData: Spot[] = [
     {

@@ -1,29 +1,50 @@
-import { Spot } from "@/src/shared/types/Spot";
+import { ISpotRepository } from "@/src/domain/repositories/ISpotRepository";
+import { Spot } from "@/src/domain/entities/Spot";
+import { SpotsData } from "../data/spots";
+import { isBrowser } from "@/src/utils/verifySSR";
 
-export class SpotRepository {
+export class SpotRepository implements ISpotRepository {
+    
+    private storageKey = "parking_spots";
 
-    getSpots():Spot[] {
-        const spots = JSON.parse(localStorage.getItem('spots')!) as Spot[];
-        return (spots);
-    }
+    constructor() {
+        if (!isBrowser()) return;
 
-    getSpotById(id: string):Spot | null {
-        const spots = this.getSpots();
-        const spot = spots.find((spot) => { spot.id = id })
-        return (spot ? spot : null);
-    }
-
-    updateSpot(id: string, data: Spot):Spot | null {
-        const spot = this.getSpotById(id);
-        if (spot) {
-            spot.status = data.status;
-            return (spot);
+        if (!localStorage.getItem(this.storageKey)) {
+            this.saveSpots(SpotsData);
         }
-        return (null);
     }
 
-    saveSpots(dataList: Spot[]):Spot[] {
-        localStorage.setItem('spots', JSON.stringify(dataList));
-        return (dataList);
+    getSpots(): Spot[] {
+        if (!isBrowser()) return SpotsData;
+
+        const data = localStorage.getItem(this.storageKey);
+        if (!data) return SpotsData;
+
+        return this.toEntities(JSON.parse(data));
     }
+
+    getSpotById(id: string): Spot | null {
+        return this.getSpots().find(s => s.id === id) ?? null;
+    }
+
+    updateSpot(spot: Spot): void {
+        const spots = this.getSpots().map(s =>
+            s.id === spot.id ? spot : s
+        );
+
+        this.saveSpots(spots);
+    }
+
+    saveSpots(spots: Spot[]) {
+        if (isBrowser()) {
+            localStorage.setItem(this.storageKey, JSON.stringify(spots));
+        }
+    }
+
+    toEntities(data: any[]): Spot[] {
+        return data.map(s => new Spot(s.id, s.status, s.zone));
+    }
+
+    
 }

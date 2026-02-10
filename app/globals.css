@@ -11,6 +11,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans);
   width: 100vw;
+  font-weight: 400;
 }
 
 h1 {
@@ -20,4 +21,4 @@ h1 {
 p, label, h2 {
     color: var(--subttitle);
     font-family: var(--font-outfit);
-} 
+}
